@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>麗港城巴士班次 - 40號 & 219X</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    .header p { font-size: 0.85rem; opacity: 0.9; }
+    .route-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .route-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #eee;
+    }
+    .route-number {
+      background: #1a73e8;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .route-info h2 { font-size: 1.1rem; color: #333; }
+    .route-info p { font-size: 0.85rem; color: #666; }
+    .bus-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .bus-item:last-child { border-bottom: none; }
+    .bus-eta {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #1a73e8;
+    }
+    .bus-eta.imminent { color: #e53935; }
+    .bus-eta.soon { color: #fb8c00; }
+    .bus-eta.later { color: #43a047; }
+    .bus-dest {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .bus-min {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 2px;
+    }
+    .loading { text-align: center; padding: 20px; color: #888; }
+    .error { text-align: center; padding: 20px; color: #e53935; }
+    .refresh-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    .refresh-btn:hover { background: #1558b0; }
+    .last-updated {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🚌 麗港城巴士班次</h1>
+    <p>40號 & 219X 實時到站</p>
+  </div>
+
+  <div id="route40" class="route-card">
+    <div class="route-header">
+      <div class="route-number">40</div>
+      <div class="route-info">
+        <h2>麗港城 → 荃灣</h2>
+        <p>麗港城總站</p>
+      </div>
+    </div>
+    <div id="eta40" class="loading">載入中...</div>
+  </div>
+
+  <div id="route219x" class="route-card">
+    <div class="route-header">
+      <div class="route-number">219X</div>
+      <div class="route-info">
+        <h2>麗港城 → 尖沙咀</h2>
+        <p>麗港城總站（循環線）</p>
+      </div>
+    </div>
+    <div id="eta219x" class="loading">載入中...</div>
+  </div>
+
+  <button class="refresh-btn" onclick="loadData()">🔄 重新整理</button>
+  <div class="last-updated" id="lastUpdated"></div>
+
+  <script>
+    const STOP_40 = 'C645EAB71B49A03C';  // LT972 麗港城總站 (往荃灣)
+    const STOP_219X = '272E83ECF9FF074D'; // LT970 麗港城總站 (往尖沙咀)
+
+    async function fetchETA(stopId, route, dest) {
+      try {
+        const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`);
+        const data = await res.json();
+        const items = data.data.filter(x => x.route === route && x.dir === 'I').slice(0, 5);
+        return items;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function fetchETA219X(stopId, route, dest) {
+      try {
+        const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`);
+        const data = await res.json();
+        const items = data.data.filter(x => x.route === route && x.dir === 'O').slice(0, 5);
+        return items;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function getMinDiff(eta) {
+      const now = new Date();
+      const target = new Date(eta);
+      const diff = (target - now) / 60000;
+      if (diff <= 0) return '已到站';
+      if (diff < 1) return '即將到站';
+      return `${Math.ceil(diff)} 分鐘`;
+    }
+
+    function getMinClass(eta) {
+      const now = new Date();
+      const target = new Date(eta);
+      const diff = (target - now) / 60000;
+      if (diff <= 1) return 'imminent';
+      if (diff <= 5) return 'soon';
+      return 'later';
+    }
+
+    async function loadData() {
+      // Route 40
+      const eta40 = await fetchETA(STOP_40, '40', '荃灣(麗城花園)');
+      const el40 = document.getElementById('eta40');
+      if (eta40.length === 0) {
+        el40.innerHTML = '<div class="error">暫無班次資料</div>';
+      } else {
+        el40.innerHTML = eta40.map(x => {
+          const dt = new Date(x.eta);
+          return `<div class="bus-item">
+            <div>
+              <div class="bus-eta ${getMinClass(x.eta)}">${dt.toLocaleTimeString('zh-HK', {hour: '2-digit', minute: '2-digit', hour12: false})}</div>
+              <div class="bus-min">${getMinDiff(x.eta)}</div>
+            </div>
+            <div class="bus-dest">${x.dest_tc}</div>
+          </div>`;
+        }).join('');
+      }
+
+      // Route 219X
+      const eta219x = await fetchETA219X(STOP_219X, '219X', '尖沙咀(循環線)');
+      const el219x = document.getElementById('eta219x');
+      if (eta219x.length === 0) {
+        el219x.innerHTML = '<div class="error">暫無班次資料</div>';
+      } else {
+        el219x.innerHTML = eta219x.map(x => {
+          const dt = new Date(x.eta);
+          return `<div class="bus-item">
+            <div>
+              <div class="bus-eta ${getMinClass(x.eta)}">${dt.toLocaleTimeString('zh-HK', {hour: '2-digit', minute: '2-digit', hour12: false})}</div>
+              <div class="bus-min">${getMinDiff(x.eta)}</div>
+            </div>
+            <div class="bus-dest">${x.dest_tc}</div>
+          </div>`;
+        }).join('');
+      }
+
+      document.getElementById('lastUpdated').textContent = `最後更新：${new Date().toLocaleString('zh-HK')}`;
+    }
+
+    loadData();
+    // Auto refresh every 60 seconds
+    setInterval(loadData, 60000);
+  </script>
+</body>
+</html>
