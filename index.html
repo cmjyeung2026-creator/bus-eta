@@ -75,13 +75,17 @@
         
         async function fetchBusData(stopId) {
             try {
+                console.log('Fetching data for stop:', stopId);
                 const resp = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`);
+                console.log('Response status:', resp.status);
                 const data = await resp.json();
+                console.log('Data received:', data.data ? data.data.length + ' items' : 'No data');
                 return data;
             } catch (e) {
                 console.error('Fetch error:', e);
-                return null;
+                return { data: [] };
             }
+        }
         }
         
         function calculateMinutes(etaStr) {
