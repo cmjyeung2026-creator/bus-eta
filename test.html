@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 測試</title>
+</head>
+<body>
+    <h2>API 測試</h2>
+    <div id="test40">測試中...</div>
+    <div id="test219x">測試中...</div>
+    <script>
+        fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/C645EAB71B49A03C')
+            .then(r => r.json())
+            .then(d => document.getElementById('test40').innerHTML = '40號: ' + d.data.length + ' 項');
+        fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/272E83ECF9FF074D')
+            .then(r => r.json())
+            .then(d => document.getElementById('test219x').innerHTML = '219X: ' + d.data.length + ' 項');
+    </script>
+</body>
+</html>
