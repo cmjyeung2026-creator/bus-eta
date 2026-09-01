@@ -3,94 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麗港城巴士到站時間 - 40號 & 219X</title>
+    <title>麗港城巴士到站時間</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f5f5f7; min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; padding: 20px; text-align: center; }
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header p { font-size: 14px; opacity: 0.9; }
-        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .route-header { display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; }
-        .route-number { background: #1a73e8; color: white; padding: 8px 15px; border-radius: 20px; font-size: 18px; font-weight: bold; margin-right: 12px; }
-        .route-info h2 { font-size: 18px; color: #333; }
-        .route-info p { font-size: 13px; color: #666; margin-top: 2px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .route-header { border-bottom: 2px solid #e0e0e0; padding-bottom: 12px; margin-bottom: 16px; }
+        .route-number { font-size: 24px; font-weight: bold; color: #1976d2; }
+        .route-info h2 { margin: 4px 0; font-size: 18px; }
+        .route-info p { margin: 0; color: #666; font-size: 14px; }
         .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .bus-item:last-child { border-bottom: none; }
-        .bus-plate { background: #f5f5f7; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #666; }
-        .bus-eta { font-size: 20px; font-weight: bold; color: #1a73e8; }
-        .bus-eta.imminent { color: #d32f2f; }
-        .bus-eta.arriving { background: #d32f2f; color: white; padding: 4px 12px; border-radius: 15px; font-size: 14px; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .error { text-align: center; padding: 20px; color: #d32f2f; }
-        .refresh-btn { display: block; width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; margin-top: 20px; }
-        .refresh-btn:hover { background: #1557b0; }
-        .time-info { text-align: center; font-size: 12px; color: #999; margin-top: 10px; }
-        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
-        .status-badge.live { background: #e8f5e9; color: #2e7d32; }
-        .route-label { font-size: 12px; color: #666; margin-top: 4px; }
+        .bus-plate { font-weight: 500; }
+        .bus-eta { color: #4caf50; font-weight: bold; font-size: 18px; }
+        .bus-eta.imminent { color: #ff9800; }
+        .bus-eta.arriving { color: #f44336; font-size: 20px; }
+        .loading { color: #999; text-align: center; padding: 20px; }
+        .error { color: #d32f2f; text-align: center; padding: 20px; }
+        .refresh-btn { display: block; width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 20px; }
+        .time-info { text-align: center; color: #999; font-size: 12px; margin-top: 12px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🚌 麗港城巴士到站時間</h1>
-        <p>40號 & 219X 從麗港城出發</p>
+    <h1 style="text-align: center; color: #333;">麗港城巴士到站時間</h1>
+    
+    <div class="card">
+        <div class="route-header">
+            <span class="route-number">40</span>
+            <div class="route-info">
+                <h2>麗港城 → 荃灣（麗城花園）</h2>
+                <p>麗港城總站 (LT972)</p>
+            </div>
+        </div>
+        <div id="route40-content" class="loading">載入中...</div>
     </div>
     
-    <div class="container">
-        <div class="card">
-            <div class="route-header">
-                <span class="route-number">40</span>
-                <div class="route-info">
-                    <h2>麗港城 → 荃灣(麗城花園)</h2>
-                    <p>麗港城總站 (LT972)</p>
-                </div>
-            </div>
-            <div id="route40-content">
-                <div class="loading">載入中...</div>
+    <div class="card">
+        <div class="route-header">
+            <span class="route-number">219X</span>
+            <div class="route-info">
+                <h2>麗港城 → 尖沙咀</h2>
+                <p>麗港城總站 (LT970)</p>
             </div>
         </div>
-        
-        <div class="card">
-            <div class="route-header">
-                <span class="route-number">219X</span>
-                <div class="route-info">
-                    <h2>麗港城 → 尖沙咀</h2>
-                    <p>麗港城總站 (LT970)</p>
-                </div>
-            </div>
-            <div id="route219x-content">
-                <div class="loading">載入中...</div>
-            </div>
-        </div>
-        
-        <button class="refresh-btn" onclick="loadAll()">🔄 重新整理</button>
-        <div class="time-info" id="last-update"></div>
+        <div id="route219x-content" class="loading">載入中...</div>
     </div>
+    
+    <button class="refresh-btn" onclick="loadAll()">重新整理</button>
+    <div class="time-info" id="last-update"></div>
 
     <script>
         const STOP_40 = 'C645EAB71B49A03C';
         const STOP_219X = '272E83ECF9FF074D';
         
+        console.log('Page loaded, starting fetch...');
+        
         async function fetchBusData(stopId) {
             try {
-                console.log('Fetching data for stop:', stopId);
-                const resp = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`);
-                console.log('Response status:', resp.status);
+                console.log('Fetching:', stopId);
+                const resp = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/' + stopId);
+                console.log('Status:', resp.status);
                 const data = await resp.json();
-                console.log('Data received:', data.data ? data.data.length + ' items' : 'No data');
+                console.log('Data:', data.data ? data.data.length + ' items' : 'No data');
                 return data;
             } catch (e) {
                 console.error('Fetch error:', e);
                 return { data: [] };
             }
         }
-
+        
         function calculateMinutes(etaStr) {
             const eta = new Date(etaStr);
             const now = new Date();
-            const diff = (eta - now) / 1000 / 60; // 分鐘
+            const diff = (eta - now) / 1000 / 60;
             return Math.max(0, Math.round(diff));
         }
         
@@ -101,11 +84,7 @@
                 return;
             }
             
-            // 過濾只顯示出發方向
-            // 40號: dir=I 是往荃灣(麗城花園)
-            // 219X: dir=O 是往尖沙咀
-            const is40 = routeNum === 40;
-            const filtered = data.data.filter(item => is40 ? item.dir === 'O' : item.dir === 'O');
+            const filtered = data.data.filter(item => item.dir === 'O');
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="error">暫無出發方向到站資訊</div>';
                 return;
@@ -116,7 +95,7 @@
             
             etas.forEach(item => {
                 const minutes = calculateMinutes(item.eta);
-                const dest = item.dest_tc || item.dest_en || '未知';
+                const dest = item.dest_tc || '未知';
                 let etaClass = 'bus-eta';
                 let etaText = minutes + ' 分鐘';
                 
@@ -127,15 +106,10 @@
                     etaClass += ' imminent';
                 }
                 
-                html += `
-                    <div class="bus-item">
-                        <div>
-                            <span class="bus-plate">${item.route} → ${dest}</span>
-                            <div class="route-label">路線 ${item.seq}</div>
-                        </div>
-                        <span class="${etaClass}">${etaText}</span>
-                    </div>
-                `;
+                html += '<div class="bus-item">' +
+                    '<span class="bus-plate">' + item.route + ' → ' + dest + '</span>' +
+                    '<span class="' + etaClass + '">' + etaText + '</span>' +
+                    '</div>';
             });
             
             container.innerHTML = html;
@@ -148,17 +122,17 @@
             container219X.innerHTML = '<div class="loading">載入中...</div>';
             
             try {
+                console.log('Loading data...');
                 const [data40, data219X] = await Promise.all([
                     fetchBusData(STOP_40),
                     fetchBusData(STOP_219X)
                 ]);
-                
+                console.log('Both loaded, rendering...');
                 renderBuses('route40-content', data40, 40);
                 renderBuses('route219x-content', data219X, 219X);
                 
                 const now = new Date();
-                document.getElementById('last-update').textContent = 
-                    '最後更新：' + now.toLocaleTimeString('zh-HK') + ' <span class="status-badge live">● 即時</span>';
+                document.getElementById('last-update').textContent = '最後更新：' + now.toLocaleTimeString('zh-HK');
             } catch (error) {
                 console.error('Load error:', error);
                 container40.innerHTML = '<div class="error">載入失敗: ' + error.message + '</div>';
@@ -166,12 +140,8 @@
             }
         }
         
-        // Load on page load
         loadAll();
-        
-        // Auto-refresh every 60 seconds
         setInterval(loadAll, 60000);
     </script>
 </body>
 </html>
-
