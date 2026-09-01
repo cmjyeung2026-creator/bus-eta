@@ -167,11 +167,7 @@
         }
         
         // Load on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadAll);
-        } else {
-            loadAll();
-        }
+        loadAll();
         
         // Auto-refresh every 60 seconds
         setInterval(loadAll, 60000);
