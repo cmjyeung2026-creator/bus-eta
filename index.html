@@ -105,7 +105,7 @@
             // 40號: dir=I 是往荃灣(麗城花園)
             // 219X: dir=O 是往尖沙咀
             const is40 = routeNum === 40;
-            const filtered = data.data.filter(item => is40 ? item.dir === 'I' : item.dir === 'O');
+            const filtered = data.data.filter(item => is40 ? item.dir === 'O' : item.dir === 'O');
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="error">暫無出發方向到站資訊</div>';
                 return;
