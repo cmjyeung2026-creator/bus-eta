@@ -33,14 +33,15 @@
             }
         }
         
-        function renderBuses(containerId, data) {
+        function renderBuses(containerId, data, expectedDest) {
             const container = document.getElementById(containerId);
             if (!data || !data.data || data.data.length === 0) {
                 container.innerHTML = '<div class="error">暫無到站資訊</div>';
                 return;
             }
             
-            const filtered = data.data.filter(item => item.dir === 'O');
+            // Filter by expected destination (往荃灣 or 往尖沙咀)
+            const filtered = data.data.filter(item => item.dest_tc === expectedDest);
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="error">暫無出發方向到站資訊</div>';
                 return;
@@ -62,8 +63,10 @@
             fetchBusData('C645EAB71B49A03C'),
             fetchBusData('272E83ECF9FF074D')
         ]).then(([data40, data219X]) => {
-            renderBuses('route40-content', data40);
-            renderBuses('route219x-content', data219X);
+            // 40號往荃灣方向，目的地是「荃灣(麗城花園)」
+            renderBuses('route40-content', data40, '荃灣(麗城花園)');
+            // 219X往尖沙咀方向，目的地是「尖沙咀(循環線)」
+            renderBuses('route219x-content', data219X, '尖沙咀(循環線)');
         }).catch(e => {
             document.getElementById('route40-content').innerHTML = '<div class="error">載入失敗</div>';
             document.getElementById('route219x-content').innerHTML = '<div class="error">載入失敗</div>';
