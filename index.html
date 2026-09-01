@@ -5,79 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麗港城巴士到站時間</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .route-header { border-bottom: 2px solid #e0e0e0; padding-bottom: 12px; margin-bottom: 16px; }
-        .route-number { font-size: 24px; font-weight: bold; color: #1976d2; }
-        .route-info h2 { margin: 4px 0; font-size: 18px; }
-        .route-info p { margin: 0; color: #666; font-size: 14px; }
-        .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .bus-plate { font-weight: 500; }
-        .bus-eta { color: #4caf50; font-weight: bold; font-size: 18px; }
-        .bus-eta.imminent { color: #ff9800; }
-        .bus-eta.arriving { color: #f44336; font-size: 20px; }
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .loading { color: #999; text-align: center; padding: 20px; }
-        .error { color: #d32f2f; text-align: center; padding: 20px; }
-        .refresh-btn { display: block; width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 20px; }
-        .time-info { text-align: center; color: #999; font-size: 12px; margin-top: 12px; }
+        .error { color: red; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center; color: #333;">麗港城巴士到站時間</h1>
-    
+    <h1>麗港城巴士到站時間</h1>
     <div class="card">
-        <div class="route-header">
-            <span class="route-number">40</span>
-            <div class="route-info">
-                <h2>麗港城 → 荃灣（麗城花園）</h2>
-                <p>麗港城總站 (LT972)</p>
-            </div>
-        </div>
+        <h2>40號 - 麗港城 → 荃灣</h2>
         <div id="route40-content" class="loading">載入中...</div>
     </div>
-    
     <div class="card">
-        <div class="route-header">
-            <span class="route-number">219X</span>
-            <div class="route-info">
-                <h2>麗港城 → 尖沙咀</h2>
-                <p>麗港城總站 (LT970)</p>
-            </div>
-        </div>
+        <h2>219X - 麗港城 → 尖沙咀</h2>
         <div id="route219x-content" class="loading">載入中...</div>
     </div>
-    
-    <button class="refresh-btn" onclick="loadAll()">重新整理</button>
-    <div class="time-info" id="last-update"></div>
-
     <script>
-        const STOP_40 = 'C645EAB71B49A03C';
-        const STOP_219X = '272E83ECF9FF074D';
-        
-        console.log('Page loaded, starting fetch...');
-        
         async function fetchBusData(stopId) {
             try {
-                console.log('Fetching:', stopId);
                 const resp = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/' + stopId);
-                console.log('Status:', resp.status);
                 const data = await resp.json();
-                console.log('Data:', data.data ? data.data.length + ' items' : 'No data');
                 return data;
             } catch (e) {
-                console.error('Fetch error:', e);
+                console.error('Error:', e);
                 return { data: [] };
             }
         }
         
-        function calculateMinutes(etaStr) {
-            const eta = new Date(etaStr);
-            const now = new Date();
-            const diff = (eta - now) / 1000 / 60;
-            return Math.max(0, Math.round(diff));
-        }
-        
-        function renderBuses(containerId, data, routeNum) {
+        function renderBuses(containerId, data) {
             const container = document.getElementById(containerId);
             if (!data || !data.data || data.data.length === 0) {
                 container.innerHTML = '<div class="error">暫無到站資訊</div>';
@@ -91,57 +47,27 @@
             }
             
             let html = '';
-            const etas = filtered.slice(0, 5);
-            
-            etas.forEach(item => {
-                const minutes = calculateMinutes(item.eta);
+            filtered.slice(0, 3).forEach(item => {
+                const eta = new Date(item.eta);
+                const now = new Date();
+                const minutes = Math.round((eta - now) / 1000 / 60);
                 const dest = item.dest_tc || '未知';
-                let etaClass = 'bus-eta';
-                let etaText = minutes + ' 分鐘';
-                
-                if (minutes <= 1) {
-                    etaClass += ' arriving';
-                    etaText = '即將到站';
-                } else if (minutes <= 3) {
-                    etaClass += ' imminent';
-                }
-                
-                html += '<div class="bus-item">' +
-                    '<span class="bus-plate">' + item.route + ' → ' + dest + '</span>' +
-                    '<span class="' + etaClass + '">' + etaText + '</span>' +
-                    '</div>';
+                html += '<p>' + item.route + ' → ' + dest + ': ' + minutes + ' 分鐘</p>';
             });
             
             container.innerHTML = html;
         }
         
-        async function loadAll() {
-            const container40 = document.getElementById('route40-content');
-            const container219X = document.getElementById('route219x-content');
-            container40.innerHTML = '<div class="loading">載入中...</div>';
-            container219X.innerHTML = '<div class="loading">載入中...</div>';
-            
-            try {
-                console.log('Loading data...');
-                const [data40, data219X] = await Promise.all([
-                    fetchBusData(STOP_40),
-                    fetchBusData(STOP_219X)
-                ]);
-                console.log('Both loaded, rendering...');
-                renderBuses('route40-content', data40, 40);
-                renderBuses('route219x-content', data219X, 219X);
-                
-                const now = new Date();
-                document.getElementById('last-update').textContent = '最後更新：' + now.toLocaleTimeString('zh-HK');
-            } catch (error) {
-                console.error('Load error:', error);
-                container40.innerHTML = '<div class="error">載入失敗: ' + error.message + '</div>';
-                container219X.innerHTML = '<div class="error">載入失敗: ' + error.message + '</div>';
-            }
-        }
-        
-        loadAll();
-        setInterval(loadAll, 60000);
+        Promise.all([
+            fetchBusData('C645EAB71B49A03C'),
+            fetchBusData('272E83ECF9FF074D')
+        ]).then(([data40, data219X]) => {
+            renderBuses('route40-content', data40);
+            renderBuses('route219x-content', data219X);
+        }).catch(e => {
+            document.getElementById('route40-content').innerHTML = '<div class="error">載入失敗</div>';
+            document.getElementById('route219x-content').innerHTML = '<div class="error">載入失敗</div>';
+        });
     </script>
 </body>
 </html>
