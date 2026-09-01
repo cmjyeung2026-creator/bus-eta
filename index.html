@@ -142,20 +142,28 @@
         }
         
         async function loadAll() {
-            document.getElementById('route40-content').innerHTML = '<div class="loading">載入中...</div>';
-            document.getElementById('route219x-content').innerHTML = '<div class="loading">載入中...</div>';
+            const container40 = document.getElementById('route40-content');
+            const container219X = document.getElementById('route219x-content');
+            container40.innerHTML = '<div class="loading">載入中...</div>';
+            container219X.innerHTML = '<div class="loading">載入中...</div>';
             
-            const [data40, data219X] = await Promise.all([
-                fetchBusData(STOP_40),
-                fetchBusData(STOP_219X)
-            ]);
-            
-            renderBuses('route40-content', data40, 40);
-            renderBuses('route219x-content', data219X, 219X);
-            
-            const now = new Date();
-            document.getElementById('last-update').textContent = 
-                '最後更新：' + now.toLocaleTimeString('zh-HK') + ' <span class="status-badge live">● 即時</span>';
+            try {
+                const [data40, data219X] = await Promise.all([
+                    fetchBusData(STOP_40),
+                    fetchBusData(STOP_219X)
+                ]);
+                
+                renderBuses('route40-content', data40, 40);
+                renderBuses('route219x-content', data219X, 219X);
+                
+                const now = new Date();
+                document.getElementById('last-update').textContent = 
+                    '最後更新：' + now.toLocaleTimeString('zh-HK') + ' <span class="status-badge live">● 即時</span>';
+            } catch (error) {
+                console.error('Load error:', error);
+                container40.innerHTML = '<div class="error">載入失敗: ' + error.message + '</div>';
+                container219X.innerHTML = '<div class="error">載入失敗: ' + error.message + '</div>';
+            }
         }
         
         // Load on page load
