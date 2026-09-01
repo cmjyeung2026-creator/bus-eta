@@ -23,9 +23,19 @@
 <body>
     <h1>麗港城巴士到站時間</h1>
     
-    <button class="refresh-btn" onclick="loadAll()">重新整理</button>
+    <div class="section-title">麗港中心</div>
+    <div class="grid">
+        <div class="card">
+            <h2>40號 - 麗港中心 → 荃灣</h2>
+            <div id="route40-lt401-content" class="loading">載入中...</div>
+        </div>
+        <div class="card">
+            <h2>219X - 麗港中心 → 尖沙咀</h2>
+            <div id="route219x-lt401-content" class="loading">載入中...</div>
+        </div>
+    </div>
     
-    <div class="section-title">麗港城總站</div>
+    <button class="refresh-btn" onclick="loadAll()">重新整理</button>
     <div class="grid">
         <div class="card">
             <h2>40號 - 麗港城 → 荃灣</h2>
