@@ -7,21 +7,44 @@
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
         .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { margin-top: 0; font-size: 1.2em; }
         .loading { color: #999; text-align: center; padding: 20px; }
         .error { color: red; text-align: center; padding: 20px; }
+        .section-title { color: #666; font-size: 0.9em; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
     <h1>麗港城巴士到站時間</h1>
+    
+    <div class="section-title">麗港城 (LT970/LT972)</div>
+    
     <div class="card">
         <h2>40號 - 麗港城 → 荃灣</h2>
         <div id="route40-content" class="loading">載入中...</div>
     </div>
+    
     <div class="card">
         <h2>219X - 麗港城 → 尖沙咀</h2>
         <div id="route219x-content" class="loading">載入中...</div>
     </div>
+    
+    <div class="section-title">麗港中心 (LT401)</div>
+    
+    <div class="card">
+        <h2>40號 - 麗港中心 → 荃灣</h2>
+        <div id="route40-lt401-content" class="loading">載入中...</div>
+    </div>
+    
+    <div class="card">
+        <h2>219X - 麗港中心 → 尖沙咀</h2>
+        <div id="route219x-lt401-content" class="loading">載入中...</div>
+    </div>
+    
     <script>
+        const STOP_LT972 = 'C645EAB71B49A03C';
+        const STOP_LT970 = '272E83ECF9FF074D';
+        const STOP_LT401 = '60EFE49C54F0CF11';
+        
         async function fetchBusData(stopId) {
             try {
                 const resp = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/' + stopId);
@@ -40,7 +63,6 @@
                 return;
             }
             
-            // Filter by expected destination (往荃灣 or 往尖沙咀)
             const filtered = data.data.filter(item => item.dest_tc === expectedDest);
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="error">暫無出發方向到站資訊</div>';
@@ -60,16 +82,19 @@
         }
         
         Promise.all([
-            fetchBusData('C645EAB71B49A03C'),
-            fetchBusData('272E83ECF9FF074D')
-        ]).then(([data40, data219X]) => {
-            // 40號往荃灣方向，目的地是「荃灣(麗城花園)」
-            renderBuses('route40-content', data40, '荃灣(麗城花園)');
-            // 219X往尖沙咀方向，目的地是「尖沙咀(循環線)」
-            renderBuses('route219x-content', data219X, '尖沙咀(循環線)');
+            fetchBusData(STOP_LT972),
+            fetchBusData(STOP_LT970),
+            fetchBusData(STOP_LT401)
+        ]).then(([data40_lt972, data219x_lt970, data40_lt401]) => {
+            renderBuses('route40-content', data40_lt972, '荃灣(麗城花園)');
+            renderBuses('route219x-content', data219x_lt970, '尖沙咀(循環線)');
+            renderBuses('route40-lt401-content', data40_lt401, '荃灣(麗城花園)');
+            renderBuses('route219x-lt401-content', data40_lt401, '尖沙咀(循環線)');
         }).catch(e => {
             document.getElementById('route40-content').innerHTML = '<div class="error">載入失敗</div>';
             document.getElementById('route219x-content').innerHTML = '<div class="error">載入失敗</div>';
+            document.getElementById('route40-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
+            document.getElementById('route219x-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
         });
     </script>
 </body>
