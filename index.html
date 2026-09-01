@@ -159,7 +159,11 @@
         }
         
         // Load on page load
-        loadAll();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAll);
+        } else {
+            loadAll();
+        }
         
         // Auto-refresh every 60 seconds
         setInterval(loadAll, 60000);
