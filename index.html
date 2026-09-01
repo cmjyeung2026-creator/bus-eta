@@ -5,39 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麗港城巴士到站時間</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card h2 { margin-top: 0; font-size: 1.2em; }
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; }
+        .section-title { color: #666; font-size: 0.9em; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { margin-top: 0; font-size: 1.1em; }
         .loading { color: #999; text-align: center; padding: 20px; }
         .error { color: red; text-align: center; padding: 20px; }
-        .section-title { color: #666; font-size: 0.9em; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+        .bus-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .bus-item:last-child { border-bottom: none; }
+        .refresh-btn { display: block; margin: 20px auto; padding: 12px 32px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; }
+        .refresh-btn:hover { background: #0056b3; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <h1>麗港城巴士到站時間</h1>
     
-    <div class="section-title">麗港城 (LT970/LT972)</div>
+    <button class="refresh-btn" onclick="loadAll()">重新整理</button>
     
-    <div class="card">
-        <h2>40號 - 麗港城 → 荃灣</h2>
-        <div id="route40-content" class="loading">載入中...</div>
+    <div class="section-title">麗港城總站</div>
+    <div class="grid">
+        <div class="card">
+            <h2>40號 - 麗港城 → 荃灣</h2>
+            <div id="route40-content" class="loading">載入中...</div>
+        </div>
+        <div class="card">
+            <h2>219X - 麗港城 → 尖沙咀</h2>
+            <div id="route219x-content" class="loading">載入中...</div>
+        </div>
     </div>
     
-    <div class="card">
-        <h2>219X - 麗港城 → 尖沙咀</h2>
-        <div id="route219x-content" class="loading">載入中...</div>
-    </div>
-    
-    <div class="section-title">麗港中心 (LT401)</div>
-    
-    <div class="card">
-        <h2>40號 - 麗港中心 → 荃灣</h2>
-        <div id="route40-lt401-content" class="loading">載入中...</div>
-    </div>
-    
-    <div class="card">
-        <h2>219X - 麗港中心 → 尖沙咀</h2>
-        <div id="route219x-lt401-content" class="loading">載入中...</div>
+    <div class="section-title">麗港中心</div>
+    <div class="grid">
+        <div class="card">
+            <h2>40號 - 麗港中心 → 荃灣</h2>
+            <div id="route40-lt401-content" class="loading">載入中...</div>
+        </div>
+        <div class="card">
+            <h2>219X - 麗港中心 → 尖沙咀</h2>
+            <div id="route219x-lt401-content" class="loading">載入中...</div>
+        </div>
     </div>
     
     <script>
@@ -75,27 +84,31 @@
                 const now = new Date();
                 const minutes = Math.round((eta - now) / 1000 / 60);
                 const dest = item.dest_tc || '未知';
-                html += '<p>' + item.route + ' → ' + dest + ': ' + minutes + ' 分鐘</p>';
+                html += '<div class="bus-item">' + item.route + ' → ' + dest + ': <b>' + minutes + ' 分鐘</b></div>';
             });
             
             container.innerHTML = html;
         }
         
-        Promise.all([
-            fetchBusData(STOP_LT972),
-            fetchBusData(STOP_LT970),
-            fetchBusData(STOP_LT401)
-        ]).then(([data40_lt972, data219x_lt970, data40_lt401]) => {
-            renderBuses('route40-content', data40_lt972, '荃灣(麗城花園)');
-            renderBuses('route219x-content', data219x_lt970, '尖沙咀(循環線)');
-            renderBuses('route40-lt401-content', data40_lt401, '荃灣(麗城花園)');
-            renderBuses('route219x-lt401-content', data219x_lt970, '尖沙咀(循環線)');
-        }).catch(e => {
-            document.getElementById('route40-content').innerHTML = '<div class="error">載入失敗</div>';
-            document.getElementById('route219x-content').innerHTML = '<div class="error">載入失敗</div>';
-            document.getElementById('route40-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
-            document.getElementById('route219x-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
-        });
+        function loadAll() {
+            Promise.all([
+                fetchBusData(STOP_LT972),
+                fetchBusData(STOP_LT970),
+                fetchBusData(STOP_LT401)
+            ]).then(([data40_lt972, data219x_lt970, data40_lt401]) => {
+                renderBuses('route40-content', data40_lt972, '荃灣(麗城花園)');
+                renderBuses('route219x-content', data219x_lt970, '尖沙咀(循環線)');
+                renderBuses('route40-lt401-content', data40_lt401, '荃灣(麗城花園)');
+                renderBuses('route219x-lt401-content', data219x_lt970, '尖沙咀(循環線)');
+            }).catch(e => {
+                document.getElementById('route40-content').innerHTML = '<div class="error">載入失敗</div>';
+                document.getElementById('route219x-content').innerHTML = '<div class="error">載入失敗</div>';
+                document.getElementById('route40-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
+                document.getElementById('route219x-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
+            });
+        }
+        
+        loadAll();
     </script>
 </body>
 </html>
