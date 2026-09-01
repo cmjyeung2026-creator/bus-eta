@@ -29,6 +29,7 @@
         .time-info { text-align: center; font-size: 12px; color: #999; margin-top: 10px; }
         .status-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
         .status-badge.live { background: #e8f5e9; color: #2e7d32; }
+        .route-label { font-size: 12px; color: #666; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -83,19 +84,33 @@
             }
         }
         
+        function calculateMinutes(etaStr) {
+            const eta = new Date(etaStr);
+            const now = new Date();
+            const diff = (eta - now) / 1000 / 60; // 分鐘
+            return Math.max(0, Math.round(diff));
+        }
+        
         function renderBuses(containerId, data, routeNum) {
             const container = document.getElementById(containerId);
-            if (!data || !data.etaList || data.etaList.length === 0) {
+            if (!data || !data.data || data.data.length === 0) {
                 container.innerHTML = '<div class="error">暫無到站資訊</div>';
                 return;
             }
             
+            // 過濾只顯示出發方向 (dir="O")
+            const outbound = data.data.filter(item => item.dir === 'O');
+            if (outbound.length === 0) {
+                container.innerHTML = '<div class="error">暫無出發方向到站資訊</div>';
+                return;
+            }
+            
             let html = '';
-            const etas = data.etaList.slice(0, 5);
+            const etas = outbound.slice(0, 5);
             
             etas.forEach(item => {
-                const minutes = item.minutes;
-                const plate = item.plate;
+                const minutes = calculateMinutes(item.eta);
+                const dest = item.dest_tc || item.dest_en || '未知';
                 let etaClass = 'bus-eta';
                 let etaText = minutes + ' 分鐘';
                 
@@ -108,7 +123,10 @@
                 
                 html += `
                     <div class="bus-item">
-                        <span class="bus-plate">${plate}</span>
+                        <div>
+                            <span class="bus-plate">${item.route} → ${dest}</span>
+                            <div class="route-label">路線 ${item.seq}</div>
+                        </div>
                         <span class="${etaClass}">${etaText}</span>
                     </div>
                 `;
