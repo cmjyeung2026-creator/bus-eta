@@ -98,15 +98,18 @@
                 return;
             }
             
-            // 過濾只顯示出發方向 (dir="O")
-            const outbound = data.data.filter(item => item.dir === 'O');
-            if (outbound.length === 0) {
+            // 過濾只顯示出發方向
+            // 40號: dir=I 是往荃灣(麗城花園)
+            // 219X: dir=O 是往尖沙咀
+            const is40 = routeNum === 40;
+            const filtered = data.data.filter(item => is40 ? item.dir === 'I' : item.dir === 'O');
+            if (filtered.length === 0) {
                 container.innerHTML = '<div class="error">暫無出發方向到站資訊</div>';
                 return;
             }
             
             let html = '';
-            const etas = outbound.slice(0, 5);
+            const etas = filtered.slice(0, 5);
             
             etas.forEach(item => {
                 const minutes = calculateMinutes(item.eta);
