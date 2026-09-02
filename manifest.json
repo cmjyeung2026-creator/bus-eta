@@ -1,0 +1,22 @@
+{
+  "name": "麗港城巴士到站時間",
+  "short_name": "巴士時間表",
+  "description": "麗港城巴士及小巴實時到站時間",
+  "start_url": "/bus-eta/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
