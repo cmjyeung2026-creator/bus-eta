@@ -48,14 +48,16 @@
   </div>
 
   <script>
-    // 使用 fetch 請求 ETA API
     const STOPS = [
       { seq: 1, name: "茜發道，近藍田站" },
       { seq: 3, name: "茶果嶺道，近麗港城商場" }
     ];
     const ROUTE_ID = 2008389;
     const ROUTE_SEQ = 2;
-
+    
+    // 使用 CORS proxy
+    const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+    
     async function loadETA() {
       const container = document.getElementById('stations');
       const updateEl = document.getElementById('lastUpdate');
@@ -65,11 +67,12 @@
         const timestamp = new Date();
         const results = {};
         
-        // 使用 fetch 同時請求多個站點
         await Promise.all(STOPS.map(async (stop) => {
           try {
             const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
-            const response = await fetch(url);
+            // 使用 allorigins proxy
+            const proxyUrl = CORS_PROXY + encodeURIComponent(url);
+            const response = await fetch(proxyUrl);
             const data = await response.json();
             if (data.data) {
               results[stop.seq] = data.data;
@@ -79,7 +82,6 @@
           }
         }));
         
-        // 渲染站點
         container.innerHTML = '';
         if (Object.keys(results).length === 0) {
           container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
@@ -117,7 +119,6 @@
           container.appendChild(station);
         });
         
-        // 更新時間
         updateEl.textContent = `最後更新：${timestamp.toLocaleTimeString('zh-HK')}`;
         
       } catch (e) {
@@ -126,9 +127,7 @@
       }
     }
 
-    // 頁面載入時自動載入
     loadETA();
-    // 每 30 秒自動刷新
     setInterval(loadETA, 30000);
   </script>
 </body>
