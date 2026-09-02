@@ -24,6 +24,9 @@
     .refresh-btn { display: block; width: 100%; padding: 15px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 20px; }
     .refresh-btn:hover { background: #c73e54; }
     .last-update { text-align: center; color: #666; font-size: 0.85rem; margin-top: 15px; }
+    .data-source { text-align: center; color: #555; font-size: 0.75rem; margin-top: 20px; line-height: 1.6; }
+    .data-source a { color: #00d4ff; text-decoration: none; }
+    .data-source a:hover { text-decoration: underline; }
     .loading { text-align: center; color: #888; padding: 40px; }
     .error { text-align: center; color: #e94560; padding: 40px; }
   </style>
@@ -45,6 +48,10 @@
     
     <button class="refresh-btn" onclick="loadETA()">重新載入</button>
     <p class="last-update" id="lastUpdate"></p>
+    <p class="data-source">
+      數據來源：<a href="https://data.gov.hk/tc-data/dataset/hk-td-sm_7-real-time-arrival-data-of-gmb" target="_blank">運輸署綠色專線小巴實時到站數據</a><br>
+      資料由數據.gov.hk 提供，受香港特區政府知識產權保護
+    </p>
   </div>
 
   <script>
