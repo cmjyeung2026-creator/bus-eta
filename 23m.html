@@ -48,6 +48,7 @@
   </div>
 
   <script>
+    // 使用 fetch 請求 ETA API
     const STOPS = [
       { seq: 1, name: "茜發道，近藍田站" },
       { seq: 3, name: "茶果嶺道，近麗港城商場" }
@@ -56,70 +57,78 @@
     const ROUTE_SEQ = 2;
 
     async function loadETA() {
+      const container = document.getElementById('stations');
+      const updateEl = document.getElementById('lastUpdate');
+      
       try {
+        container.innerHTML = '<div class="loading">載入中...</div>';
+        const timestamp = new Date();
         const results = {};
-        const timestamp = new Date().toISOString();
         
-        // 同時請求兩個站點
-        await Promise.all(STOPS.map(async stop => {
-          const response = await fetch(`https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`);
-          const data = await response.json();
-          if (data.data) {
-            results[stop.seq] = data.data;
+        // 使用 fetch 同時請求多個站點
+        await Promise.all(STOPS.map(async (stop) => {
+          try {
+            const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.data) {
+              results[stop.seq] = data.data;
+            }
+          } catch (e) {
+            console.error(`Error fetching stop ${stop.seq}:`, e);
           }
         }));
         
-        renderStations(results);
-        updateTime(timestamp);
+        // 渲染站點
+        container.innerHTML = '';
+        if (Object.keys(results).length === 0) {
+          container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
+          return;
+        }
+        
+        STOPS.forEach(stop => {
+          const stopData = results[stop.seq];
+          const station = document.createElement('div');
+          station.className = 'station';
+          
+          if (!stopData) {
+            station.innerHTML = `
+              <div class="station-name">${stop.name}</div>
+              <div class="eta-list"><span class="eta">無資料</span></div>
+            `;
+          } else {
+            const etaList = stopData.eta || [];
+            const etaHtml = etaList.length > 0 
+              ? etaList.map(eta => {
+                  const isSoon = eta.diff <= 5;
+                  const isScheduled = eta.remarks_tc === "未開出";
+                  return `<span class="eta ${isSoon ? 'soon' : (isScheduled ? 'scheduled' : '')}">
+                    ${isSoon ? '即時到站' : (isScheduled ? '未開出' : `約 ${eta.diff} 分鐘`)}
+                  </span>`;
+                }).join('')
+              : '<span class="eta">無資料</span>';
+            
+            station.innerHTML = `
+              <div class="station-name">${stop.name}</div>
+              <div class="eta-list">${etaHtml}</div>
+            `;
+          }
+          
+          container.appendChild(station);
+        });
+        
+        // 更新時間
+        updateEl.textContent = `最後更新：${timestamp.toLocaleTimeString('zh-HK')}`;
+        
       } catch (e) {
         console.error('Error:', e);
-        document.getElementById('stations').innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
+        container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
       }
     }
 
-    function renderStations(results) {
-      const container = document.getElementById('stations');
-      container.innerHTML = '';
-      
-      STOPS.forEach(stop => {
-        const stopData = results[stop.seq];
-        
-        const station = document.createElement('div');
-        station.className = 'station';
-        
-        if (!stopData) {
-          station.innerHTML = `
-            <div class="station-name">${stop.name}</div>
-            <div class="eta-list"><span class="eta">無資料</span></div>
-          `;
-        } else {
-          const etaList = stopData.eta || [];
-          const etaHtml = etaList.length > 0 
-            ? etaList.map(eta => {
-                const isSoon = eta.diff <= 5;
-                const isScheduled = eta.remarks_tc === "未開出";
-                return `<span class="eta ${isSoon ? 'soon' : (isScheduled ? 'scheduled' : '')}">
-                  ${isSoon ? '即時到站' : (isScheduled ? '未開出' : `約 ${eta.diff} 分鐘`)}
-                </span>`;
-              }).join('')
-            : '<span class="eta">無資料</span>';
-          
-          station.innerHTML = `
-            <div class="station-name">${stop.name}</div>
-            <div class="eta-list">${etaHtml}</div>
-          `;
-        }
-        
-        container.appendChild(station);
-      });
-    }
-
-    function updateTime(timestamp) {
-      const date = new Date(timestamp);
-      document.getElementById('lastUpdate').textContent = `最後更新：${date.toLocaleTimeString('zh-HK')}`;
-    }
-
+    // 頁面載入時自動載入
     loadETA();
+    // 每 30 秒自動刷新
     setInterval(loadETA, 30000);
   </script>
 </body>
