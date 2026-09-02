@@ -55,9 +55,6 @@
     const ROUTE_ID = 2008389;
     const ROUTE_SEQ = 2;
     
-    // 使用 CORS proxy
-    const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-    
     async function loadETA() {
       const container = document.getElementById('stations');
       const updateEl = document.getElementById('lastUpdate');
@@ -70,9 +67,7 @@
         await Promise.all(STOPS.map(async (stop) => {
           try {
             const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
-            // 使用 allorigins proxy
-            const proxyUrl = CORS_PROXY + encodeURIComponent(url);
-            const response = await fetch(proxyUrl);
+            const response = await fetch(url);
             const data = await response.json();
             if (data.data) {
               results[stop.seq] = data.data;
