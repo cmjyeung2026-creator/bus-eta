@@ -26,6 +26,7 @@
     .last-update { text-align: center; color: #666; font-size: 0.85rem; margin-top: 15px; }
     .loading { text-align: center; color: #888; padding: 40px; }
     .error { text-align: center; color: #e94560; padding: 40px; }
+    .debug { background: #333; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 0.8rem; color: #888; }
   </style>
 </head>
 <body>
@@ -45,6 +46,7 @@
     
     <button class="refresh-btn" onclick="loadETA()">重新載入</button>
     <p class="last-update" id="lastUpdate"></p>
+    <div class="debug" id="debug"></div>
   </div>
 
   <script>
@@ -58,24 +60,43 @@
     async function loadETA() {
       const container = document.getElementById('stations');
       const updateEl = document.getElementById('lastUpdate');
+      const debugEl = document.getElementById('debug');
+      
+      debugEl.textContent = '';
       
       try {
         container.innerHTML = '<div class="loading">載入中...</div>';
         const timestamp = new Date();
         const results = {};
         
+        // 測試 API 連接
+        debugEl.textContent = '測試 API 連接...';
+        
         await Promise.all(STOPS.map(async (stop) => {
           try {
             const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
+            debugEl.textContent += `\n請求: ${url}`;
+            
             const response = await fetch(url);
+            debugEl.textContent += `\n狀態: ${response.status}`;
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
+            debugEl.textContent += `\n返回: ${JSON.stringify(data).substring(0, 100)}...`;
+            
             if (data.data) {
               results[stop.seq] = data.data;
             }
           } catch (e) {
+            debugEl.textContent += `\n錯誤: ${e.message}`;
             console.error(`Error fetching stop ${stop.seq}:`, e);
           }
         }));
+        
+        debugEl.textContent += `\n結果數量: ${Object.keys(results).length}`;
         
         container.innerHTML = '';
         if (Object.keys(results).length === 0) {
@@ -115,8 +136,10 @@
         });
         
         updateEl.textContent = `最後更新：${timestamp.toLocaleTimeString('zh-HK')}`;
+        debugEl.textContent += `\n✅ 成功載入 ${Object.keys(results).length} 個站點`;
         
       } catch (e) {
+        debugEl.textContent += `\n❌ 錯誤: ${e.message}`;
         console.error('Error:', e);
         container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
       }
