@@ -48,14 +48,18 @@
   </div>
 
   <script>
+    // 麗港城站 (stop_seq=3) 和 藍田站 (stop_seq=1)
     const STOPS = [
-      { id: 20015117, name: "茶果嶺道，近麗港城商場" },
-      { id: 20016438, name: "茜發道，近藍田站" }
+      { seq: 1, name: "茜發道，近藍田站" },
+      { seq: 3, name: "茶果嶺道，近麗港城商場" }
     ];
+    const ROUTE_ID = 2008389;
+    const ROUTE_SEQ = 2;
 
     async function loadETA() {
       try {
-        const response = await fetch('https://data.etagmb.gov.hk/eta/stop/20015117');
+        // 用 route-stop-eta endpoint
+        const response = await fetch(`https://data.etagmb.gov.hk/route-stop-eta/${ROUTE_ID}/${ROUTE_SEQ}`);
         const data = await response.json();
         
         if (data.code && data.code !== 200) {
@@ -77,8 +81,7 @@
       const stopsData = data.data || [];
       
       STOPS.forEach(stop => {
-        // 搵 route_id=2008389, route_seq=2 嘅資料
-        const stopInfo = stopsData.find(s => s.stop_id === stop.id && s.route_id === 2008389 && s.route_seq === 2);
+        const stopInfo = stopsData.find(s => s.stop_seq === stop.seq && s.route_id === ROUTE_ID && s.route_seq === ROUTE_SEQ);
         
         const station = document.createElement('div');
         station.className = 'station';
