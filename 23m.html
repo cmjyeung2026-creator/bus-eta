@@ -25,6 +25,7 @@
     .refresh-btn:hover { background: #c73e54; }
     .last-update { text-align: center; color: #666; font-size: 0.85rem; margin-top: 15px; }
     .loading { text-align: center; color: #888; padding: 40px; }
+    .error { text-align: center; color: #e94560; padding: 40px; }
   </style>
 </head>
 <body>
@@ -56,10 +57,16 @@
       try {
         const response = await fetch('https://data.etagmb.gov.hk/eta/stop/20015117');
         const data = await response.json();
+        
+        if (data.code && data.code !== 200) {
+          throw new Error(data.message || 'API error');
+        }
+        
         renderStations(data);
         updateTime(data.generated_timestamp);
       } catch (e) {
-        document.getElementById('stations').innerHTML = '<div class="loading">載入失敗，請稍後再試</div>';
+        console.error('Error:', e);
+        document.getElementById('stations').innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
       }
     }
 
@@ -70,27 +77,35 @@
       const stopsData = data.data || [];
       
       STOPS.forEach(stop => {
+        // 搵 route_id=2008389, route_seq=2 嘅資料
         const stopInfo = stopsData.find(s => s.stop_id === stop.id && s.route_id === 2008389 && s.route_seq === 2);
-        if (!stopInfo) return;
         
         const station = document.createElement('div');
         station.className = 'station';
         
-        const etaList = stopInfo.eta || [];
-        const etaHtml = etaList.length > 0 
-          ? etaList.map(eta => {
-              const isSoon = eta.diff <= 5;
-              const isScheduled = eta.remarks_tc === "未開出";
-              return `<span class="eta ${isSoon ? 'soon' : (isScheduled ? 'scheduled' : '')}">
-                ${isSoon ? '即時到站' : (isScheduled ? '未開出' : `約 ${eta.diff} 分鐘`)}
-              </span>`;
-            }).join('')
-          : '<span class="eta">無資料</span>';
+        if (!stopInfo) {
+          station.innerHTML = `
+            <div class="station-name">${stop.name}</div>
+            <div class="eta-list"><span class="eta">無資料</span></div>
+          `;
+        } else {
+          const etaList = stopInfo.eta || [];
+          const etaHtml = etaList.length > 0 
+            ? etaList.map(eta => {
+                const isSoon = eta.diff <= 5;
+                const isScheduled = eta.remarks_tc === "未開出";
+                return `<span class="eta ${isSoon ? 'soon' : (isScheduled ? 'scheduled' : '')}">
+                  ${isSoon ? '即時到站' : (isScheduled ? '未開出' : `約 ${eta.diff} 分鐘`)}
+                </span>`;
+              }).join('')
+            : '<span class="eta">無資料</span>';
+          
+          station.innerHTML = `
+            <div class="station-name">${stop.name}</div>
+            <div class="eta-list">${etaHtml}</div>
+          `;
+        }
         
-        station.innerHTML = `
-          <div class="station-name">${stop.name}</div>
-          <div class="eta-list">${etaHtml}</div>
-        `;
         container.appendChild(station);
       });
     }
