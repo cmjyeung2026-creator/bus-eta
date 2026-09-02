@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小巴 23M 到站時間 - 麗港城</title>
+  <title>小巴 23M & 23C 到站時間 - 麗港城</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
     h1 { text-align: center; color: #00d4ff; margin-bottom: 10px; font-size: 2rem; }
     .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
-    .route-info { background: #16213e; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .route-section { background: #16213e; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
     .route-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .route-number { background: #0f3460; color: #00d4ff; padding: 10px 20px; border-radius: 8px; font-size: 1.5rem; font-weight: bold; }
     .route-direction { color: #aaa; }
@@ -20,7 +20,7 @@
     .eta-list { display: flex; gap: 10px; flex-wrap: wrap; }
     .eta { background: #1a1a2e; padding: 8px 15px; border-radius: 6px; font-size: 0.95rem; }
     .eta.soon { background: #00d4ff; color: #000; font-weight: bold; }
-    .eta.scheduled { background: #333; color: #888; }
+    .eta.delayed { background: #e94560; color: white; font-weight: bold; }
     .refresh-btn { display: block; width: 100%; padding: 15px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 20px; }
     .refresh-btn:hover { background: #c73e54; }
     .last-update { text-align: center; color: #666; font-size: 0.85rem; margin-top: 15px; }
@@ -33,15 +33,25 @@
 </head>
 <body>
   <div class="container">
-    <h1>小巴 23M</h1>
-    <p class="subtitle">麗港城 ↔ 裕民坊</p>
+    <h1>小巴 23M & 23C</h1>
+    <p class="subtitle">麗港城 ↔ 裕民坊 / 藍田 ↔ 油塘</p>
     
-    <div class="route-info">
+    <div class="route-section">
       <div class="route-header">
         <span class="route-number">23M</span>
         <span class="route-direction">往麗港城方向</span>
       </div>
-      <div class="stations" id="stations">
+      <div class="stations" id="stations-23m">
+        <div class="loading">載入中...</div>
+      </div>
+    </div>
+    
+    <div class="route-section">
+      <div class="route-header">
+        <span class="route-number">23C</span>
+        <span class="route-direction">循環線</span>
+      </div>
+      <div class="stations" id="stations-23c">
         <div class="loading">載入中...</div>
       </div>
     </div>
@@ -55,76 +65,113 @@
   </div>
 
   <script>
-    const STOPS = [
+    const STOPS_23M = [
       { seq: 1, name: "茜發道，近藍田站" },
       { seq: 3, name: "茶果嶺道，近麗港城商場" }
     ];
-    const ROUTE_ID = 2008389;
-    const ROUTE_SEQ = 2;
+    const ROUTE_ID_23M = 2008389;
+    const ROUTE_SEQ_23M = 2;
+    
+    const STOPS_23C = [
+      { seq: 2, name: "茜發道，近麗港城第三期" },
+      { seq: 11, name: "鯉魚門道，近鯉魚門廣場" }
+    ];
+    const ROUTE_ID_23C = 2008391;
+    const ROUTE_SEQ_23C = 1;
+    
+    async function fetchETA(routeId, routeSeq, stopSeq) {
+      try {
+        const url = `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${routeSeq}/${stopSeq}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.data) return data.data;
+      } catch (e) {
+        console.error(`Error fetching ${routeId}/${routeSeq}/${stopSeq}:`, e);
+      }
+      return null;
+    }
+    
+    function renderStation(container, stopName, stopData) {
+      const station = document.createElement('div');
+      station.className = 'station';
+      
+      if (!stopData || !stopData.eta || stopData.eta.length === 0) {
+        station.innerHTML = `
+          <div class="station-name">${stopName}</div>
+          <div class="eta-list"><span class="eta">無資料</span></div>
+        `;
+        container.appendChild(station);
+        return;
+      }
+      
+      const etaHtml = stopData.eta.map(eta => {
+        const isSoon = eta.diff <= 5;
+        const isDelayed = eta.remarks_tc === '行車受阻';
+        return `<span class="eta ${isSoon ? 'soon' : isDelayed ? 'delayed' : ''}">
+          ${isSoon ? '即時到站' : isDelayed ? `延誤 ${eta.diff} 分鐘` : `約 ${eta.diff} 分鐘`}
+        </span>`;
+      }).join('');
+      
+      station.innerHTML = `
+        <div class="station-name">${stopName}</div>
+        <div class="eta-list">${etaHtml}</div>
+      `;
+      container.appendChild(station);
+    }
     
     async function loadETA() {
-      const container = document.getElementById('stations');
+      const container23m = document.getElementById('stations-23m');
+      const container23c = document.getElementById('stations-23c');
       const updateEl = document.getElementById('lastUpdate');
       
       try {
-        container.innerHTML = '<div class="loading">載入中...</div>';
+        container23m.innerHTML = '<div class="loading">載入中...</div>';
+        container23c.innerHTML = '<div class="loading">載入中...</div>';
         const timestamp = new Date();
-        const results = {};
         
-        await Promise.all(STOPS.map(async (stop) => {
-          try {
-            const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            if (data.data) {
-              results[stop.seq] = data.data;
+        const results23m = {};
+        const results23c = {};
+        
+        await Promise.all([
+          ...STOPS_23M.map(async (stop) => {
+            const data = await fetchETA(ROUTE_ID_23M, ROUTE_SEQ_23M, stop.seq);
+            if (data) results23m[stop.seq] = data;
+          }),
+          ...STOPS_23C.map(async (stop) => {
+            const data = await fetchETA(ROUTE_ID_23C, ROUTE_SEQ_23C, stop.seq);
+            if (data) results23c[stop.seq] = data;
+          })
+        ]);
+        
+        container23m.innerHTML = '';
+        container23c.innerHTML = '';
+        
+        if (Object.keys(results23m).length === 0) {
+          container23m.innerHTML = '<div class="error">載入失敗</div>';
+        } else {
+          STOPS_23M.forEach(stop => {
+            if (results23m[stop.seq]) {
+              renderStation(container23m, stop.name, results23m[stop.seq]);
             }
-          } catch (e) {
-            console.error(`Error fetching stop ${stop.seq}:`, e);
-          }
-        }));
-        
-        container.innerHTML = '';
-        if (Object.keys(results).length === 0) {
-          container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
-          return;
+          });
         }
         
-        STOPS.forEach(stop => {
-          const stopData = results[stop.seq];
-          const station = document.createElement('div');
-          station.className = 'station';
-          
-          if (!stopData) {
-            station.innerHTML = `
-              <div class="station-name">${stop.name}</div>
-              <div class="eta-list"><span class="eta">無資料</span></div>
-            `;
-          } else {
-            const etaList = stopData.eta || [];
-            const etaHtml = etaList.length > 0 
-              ? etaList.map(eta => {
-                  const isSoon = eta.diff <= 5;
-                  return `<span class="eta ${isSoon ? 'soon' : ''}">
-                    ${isSoon ? '即時到站' : `約 ${eta.diff} 分鐘`}
-                  </span>`;
-                }).join('')
-              : '<span class="eta">無資料</span>';
-            
-            station.innerHTML = `
-              <div class="station-name">${stop.name}</div>
-              <div class="eta-list">${etaHtml}</div>
-            `;
-          }
-          
-          container.appendChild(station);
-        });
+        if (Object.keys(results23c).length === 0) {
+          container23c.innerHTML = '<div class="error">載入失敗</div>';
+        } else {
+          STOPS_23C.forEach(stop => {
+            if (results23c[stop.seq]) {
+              renderStation(container23c, stop.name, results23c[stop.seq]);
+            }
+          });
+        }
         
         updateEl.textContent = `最後更新：${timestamp.toLocaleTimeString('zh-HK')}`;
         
       } catch (e) {
         console.error('Error:', e);
-        container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
+        container23m.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
+        container23c.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
       }
     }
 
