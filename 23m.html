@@ -26,7 +26,7 @@
     .last-update { text-align: center; color: #666; font-size: 0.85rem; margin-top: 15px; }
     .loading { text-align: center; color: #888; padding: 40px; }
     .error { text-align: center; color: #e94560; padding: 40px; }
-    .debug { background: #333; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 0.8rem; color: #888; }
+    .debug { background: #333; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 0.8rem; color: #888; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -57,6 +57,12 @@
     const ROUTE_ID = 2008389;
     const ROUTE_SEQ = 2;
     
+    function debug(msg) {
+      const debugEl = document.getElementById('debug');
+      debugEl.textContent += (debugEl.textContent ? '\n' : '') + msg;
+      console.log(msg);
+    }
+    
     async function loadETA() {
       const container = document.getElementById('stations');
       const updateEl = document.getElementById('lastUpdate');
@@ -69,34 +75,42 @@
         const timestamp = new Date();
         const results = {};
         
-        // 測試 API 連接
-        debugEl.textContent = '測試 API 連接...';
+        debug('開始載入...');
         
-        await Promise.all(STOPS.map(async (stop) => {
+        for (const stop of STOPS) {
+          const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
+          debug(`請求: ${url}`);
+          
           try {
-            const url = `https://data.etagmb.gov.hk/eta/route-stop/${ROUTE_ID}/${ROUTE_SEQ}/${stop.seq}`;
-            debugEl.textContent += `\n請求: ${url}`;
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
             
-            const response = await fetch(url);
-            debugEl.textContent += `\n狀態: ${response.status}`;
+            debug(`狀態: ${response.status} ${response.statusText}`);
             
             if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
-            debugEl.textContent += `\n返回: ${JSON.stringify(data).substring(0, 100)}...`;
+            debug(`返回: ${JSON.stringify(data).substring(0, 150)}...`);
             
             if (data.data) {
               results[stop.seq] = data.data;
+              debug(`成功載入 ${stop.name}`);
+            } else {
+              debug(`無 data 字段: ${JSON.stringify(data).substring(0, 100)}`);
             }
           } catch (e) {
-            debugEl.textContent += `\n錯誤: ${e.message}`;
+            debug(`錯誤: ${e.message}`);
             console.error(`Error fetching stop ${stop.seq}:`, e);
           }
-        }));
+        }
         
-        debugEl.textContent += `\n結果數量: ${Object.keys(results).length}`;
+        debug(`結果數量: ${Object.keys(results).length}`);
         
         container.innerHTML = '';
         if (Object.keys(results).length === 0) {
@@ -116,6 +130,8 @@
             `;
           } else {
             const etaList = stopData.eta || [];
+            debug(`站點 ${stop.name} 有 ${etaList.length} 班車`);
+            
             const etaHtml = etaList.length > 0 
               ? etaList.map(eta => {
                   const isSoon = eta.diff <= 5;
@@ -136,10 +152,10 @@
         });
         
         updateEl.textContent = `最後更新：${timestamp.toLocaleTimeString('zh-HK')}`;
-        debugEl.textContent += `\n✅ 成功載入 ${Object.keys(results).length} 個站點`;
+        debug(`✅ 成功載入 ${Object.keys(results).length} 個站點`);
         
       } catch (e) {
-        debugEl.textContent += `\n❌ 錯誤: ${e.message}`;
+        debug(`❌ 錯誤: ${e.message}`);
         console.error('Error:', e);
         container.innerHTML = '<div class="error">載入失敗，請稍後再試</div>';
       }
