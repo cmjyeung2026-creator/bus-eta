@@ -17,6 +17,9 @@
         .bus-item:last-child { border-bottom: none; }
         .refresh-btn { display: block; margin: 20px auto; padding: 12px 32px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; }
         .refresh-btn:hover { background: #0056b3; }
+        .data-source { text-align: center; color: #888; font-size: 0.75em; margin-top: 20px; line-height: 1.6; }
+        .data-source a { color: #007bff; text-decoration: none; }
+        .data-source a:hover { text-decoration: underline; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -48,6 +51,10 @@
     </div>
     
     <button class="refresh-btn" onclick="loadAll()">重新整理</button>
+    <p class="data-source">
+      數據來源：<a href="https://data.gov.hk/tc-data/dataset/hk-td-sm_3-real-time-arrival-data-for-bus" target="_blank">運輸署巴士實時到站數據</a><br>
+      資料由數據.gov.hk 提供，受香港特區政府知識產權保護
+    </p>
     
     <script>
         const STOP_LT972 = 'C645EAB71B49A03C';
