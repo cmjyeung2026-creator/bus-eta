@@ -56,6 +56,14 @@
         </div>
     </div>
     
+    <div class="section-title">鑽石山站 (WT191)</div>
+    <div class="grid">
+        <div class="card">
+            <h2>40號 - 鑽石山站 (WT191) → 麗港城</h2>
+            <div id="route40-wt191-content" class="loading">載入中...</div>
+        </div>
+    </div>
+    
     <button class="refresh-btn" onclick="loadAll()">重新整理</button>
     <p class="data-source">
       數據來源：<a href="https://data.gov.hk/tc-data/dataset/hk-td-sm_3-real-time-arrival-data-for-bus" target="_blank">運輸署巴士實時到站數據</a><br>
@@ -66,6 +74,18 @@
         const STOP_LT972 = 'C645EAB71B49A03C';
         const STOP_LT970 = '272E83ECF9FF074D';
         const STOP_LT401 = 'AA552AEC56A11EE4';
+        const STOP_WT191 = '9DE875FD17C67097'; // WT191 鑽石山站 (40號 往麗港城)
+        
+        async function fetchRoute40AtWT191() {
+            try {
+                const resp = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/' + STOP_WT191 + '/40/1');
+                const data = await resp.json();
+                return { data: data.data || [] };
+            } catch (e) {
+                console.error('Error:', e);
+                return { data: [] };
+            }
+        }
         
         async function fetchBusData(stopId) {
             try {
@@ -107,17 +127,20 @@
             Promise.all([
                 fetchBusData(STOP_LT972),
                 fetchBusData(STOP_LT970),
-                fetchBusData(STOP_LT401)
-            ]).then(([data40_lt972, data219x_lt970, data40_lt401]) => {
+                fetchBusData(STOP_LT401),
+                fetchRoute40AtWT191()
+            ]).then(([data40_lt972, data219x_lt970, data40_lt401, data40_wt191]) => {
                 renderBuses('route40-content', data40_lt972, '荃灣(麗城花園)');
                 renderBuses('route219x-content', data219x_lt970, '尖沙咀(循環線)');
                 renderBuses('route40-lt401-content', data40_lt401, '荃灣(麗城花園)');
                 renderBuses('route219x-lt401-content', data219x_lt970, '尖沙咀(循環線)');
+                renderBuses('route40-wt191-content', data40_wt191, '麗港城');
             }).catch(e => {
                 document.getElementById('route40-content').innerHTML = '<div class="error">載入失敗</div>';
                 document.getElementById('route219x-content').innerHTML = '<div class="error">載入失敗</div>';
                 document.getElementById('route40-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
                 document.getElementById('route219x-lt401-content').innerHTML = '<div class="error">載入失敗</div>';
+                document.getElementById('route40-wt191-content').innerHTML = '<div class="error">載入失敗</div>';
             });
         }
         
